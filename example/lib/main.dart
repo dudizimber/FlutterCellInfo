@@ -19,6 +19,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   CellsResponse _cellsResponse;
+  List<SimInfoList> _list;
+  List<Map<dynamic, dynamic>> all = [];
 
   @override
   void initState() {
@@ -52,10 +54,20 @@ class _MyAppState extends State<MyApp> {
         print('currentDBM = ' + currentDBM);
       }
 
+      print(cellsResponse.primaryCellList[0].lte.toJson());
+
       String simInfo = await CellInfo.getSIMInfo;
       final simJson = json.decode(simInfo);
-      print("desply name ${SIMInfoResponse.fromJson(simJson).simInfoList[0].displayName}");
+      setState(() {
+        _list = SIMInfoResponse.fromJson(simJson).simInfoList;
+      });
+      print(
+          "desply name ${SIMInfoResponse.fromJson(simJson).simInfoList[0].displayName}");
 
+      for (var cell in cellsResponse.primaryCellList) {
+        all.add({'cell': cell, 'sim': _list[0]});
+      }
+      setState(() {});
     } on PlatformException {
       _cellsResponse = null;
     }
@@ -78,9 +90,36 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: _cellsResponse != null
-            ? Center(
-                child: Text(
-                    'mahmoud = ${currentDBM}\n primary = ${_cellsResponse.primaryCellList.length.toString()} \n neighbor = ${_cellsResponse.neighboringCellList.length}'),
+            ? ListView(
+                children: all
+                    .map((e) => Card(
+                          child: Column(
+                            children: [
+                              Text(
+                                e['sim'].displayName,
+                              ),
+                              Text(
+                                'cdma=${e['cell'].cdma?.signalCDMA?.dbm}',
+                              ),
+                              Text(
+                                'lte=${e['cell'].lte?.signalLTE?.dbm}; cid=${e['cell'].lte?.cid}',
+                              ),
+                              Text(
+                                'gsm=${e['cell'].gsm?.signalGSM?.dbm}',
+                              ),
+                              Text(
+                                'nr=${e['cell'].nr?.signalNR?.dbm}',
+                              ),
+                              Text(
+                                'tdscdma=${e['cell'].tdscdma?.signalTDSCDMA?.dbm}',
+                              ),
+                              Text(
+                                'wcdma=${e['cell'].wcdma?.signalWCDMA?.dbm}',
+                              ),
+                            ],
+                          ),
+                        ))
+                    .toList(),
               )
             : null,
       ),
